@@ -1,4 +1,5 @@
 import time
+import csv
 from operator import attrgetter
 
 
@@ -53,81 +54,90 @@ def afficherPanier(actions):
     page = "Liste des actions à acquérir :\n"
     for i in range(0, len(actions)):
         if actions[i].panier != 0:
-            page += f"- {actions[i].panier}x {actions[i].nom}\n"
+            page += f"- {actions[i].panier}x {actions[i].nom} {actions[i].cout}\n"
     return page
 
 
-def construirePanier(actions, noeud, cout):
+def construirePanier(actions, noeud, invest, coutNoeud):
+    """Fonction récursive de parcours d'un arbre binaire avec optimisation de bornes inf/sup"""
     global meilleurRendement
     global meilleurPanier
     global iteration
+    global coutTotal
     iteration += 1
-    if noeud < len(actions) and cout < 500:
+    if noeud < len(actions) and invest < 500 and (invest + coutTotal - coutNoeud) > 498:
         actions[noeud].panier = 1
-        construirePanier(actions, noeud + 1, cout + actions[noeud].cout)
+        construirePanier(actions, noeud + 1, invest + actions[noeud].cout, coutNoeud + actions[noeud].cout)
         actions[noeud].panier = 0
-        construirePanier(actions, noeud + 1, cout)
+        construirePanier(actions, noeud + 1, invest, coutNoeud + actions[noeud].cout)
     else:
         rendementPanier = sommeRendement(actions)
-        if cout <= 500 and rendementPanier > meilleurRendement:
+        if invest <= 500 and rendementPanier > meilleurRendement:
             meilleurRendement = rendementPanier
             meilleurPanier = extrairePanier(actions)
     return
 
-actions = []
-actions.append(Action("Action-1", 20, 0.05))
-actions.append(Action("Action-2", 30, 0.1))
-actions.append(Action("Action-3", 50, 0.15))
-actions.append(Action("Action-4", 70, 0.20))
-actions.append(Action("Action-5", 60, 0.17))
-actions.append(Action("Action-6", 80, 0.25))
-actions.append(Action("Action-7", 22, 0.07))
-actions.append(Action("Action-8", 26, 0.11))
-actions.append(Action("Action-9", 48, 0.13))
-actions.append(Action("Action-10", 34, 0.27))
-actions.append(Action("Action-11", 42, 0.17))
-actions.append(Action("Action-12", 110, 0.09))
-actions.append(Action("Action-13", 38, 0.23))
-actions.append(Action("Action-14", 14, 0.01))
-actions.append(Action("Action-15", 18, 0.03))
-actions.append(Action("Action-16", 8, 0.08))
-actions.append(Action("Action-17", 4, 0.12))
-actions.append(Action("Action-18", 10, 0.14))
-actions.append(Action("Action-19", 24, 0.21))
-actions.append(Action("Action-20", 114, 0.18))
 
-print("\nMETHODE GLOUTONNE\n")
+def verifDataset(row):
+    if float(row[1]) <= 0:
+        return False
+    else:
+        return True
+
+
+def lireDataset(nomFichier):
+    """Création de la liste d'objet Action à partir du Dataset"""
+    actions = []
+    with open(nomFichier, 'r', newline='') as f:
+        lecteur = csv.reader(f, delimiter=',')
+        entete = True
+        for row in lecteur:
+            if not entete and verifDataset(row):
+                actions.append(Action(row[0], float(row[1]), float(row[2]) / 100))
+            entete = False
+    return actions
+
+
+def methodeGloutonne(dataset):
+    actions = lireDataset(dataset)
+    print(f"\nMETHODE GLOUTONNE {dataset}\n")
+
+    print(time.ctime())
+    cout = 0
+    actions.sort(key=attrgetter('benefice', 'cout'), reverse=True)
+    for i in range(len(actions)):
+        invest = cout + actions[i].cout
+        if invest <= 500:
+            cout = invest
+            actions[i].panier = 1
+    print(time.ctime())
+
+    print(i + 1, "Itérations")
+    print("Investissement de " + "{:.2f}".format(sommeCout(actions)) + " € pour un rendement de " +
+          "{:.2f}".format(sommeRendement(actions)) + " € sur deux ans")
+    print(afficherPanier(actions))
+    return
+
+methodeGloutonne('Data\Exercice.csv')
+
+actions = lireDataset('Data\Exercice.csv')
+print("\nPROCEDURE DE SEPARATION ET D'EVALUATION (basique) Data\Exercice.csv\n")
+
 print(time.ctime())
-
-cout = 0
-actions.sort(key=attrgetter('benefice', 'cout'), reverse=True)
-for i in range(len(actions)):
-    invest = cout + actions[i].cout
-    if invest <= 500:
-        cout = invest
-        actions[i].panier = 1
-
-print(time.ctime())
-print(f"Investissement de {sommeCout(actions)} € pour un rendement de " +
-      "{:.2f}".format(sommeRendement(actions)) + " € sur deux ans")
-print(afficherPanier(actions))
-
-for i in range(20): actions[i].panier = 0
-
-print("\nMETHODE DYNAMIQUE\n")
-print(time.ctime())
-
 meilleurRendement = 0
 meilleurPanier = bin(0)
 iteration = 0
-
-actions.sort(key=attrgetter('cout'), reverse=True)
-construirePanier(actions, 0, 0)
-
+coutTotal = 0
+actions.sort(key=attrgetter('benefice', 'cout'), reverse=True)
+for i in range(len(actions)):
+    coutTotal += actions[i].cout
+construirePanier(actions, 0, 0, 0)
 print(time.ctime())
+
+print(iteration, "Itérations")
 genererPanier(actions, meilleurPanier)
-print(f"Investissement de {sommeCout(actions)} € pour un rendement de " +
+print("Investissement de " + "{:.2f}".format(sommeCout(actions)) + " € pour un rendement de " +
       "{:.2f}".format(meilleurRendement) + " € sur deux ans")
 print(afficherPanier(actions))
-print(iteration)
 
+methodeGloutonne('Data\dataset1_Python+P7.csv')

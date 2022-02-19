@@ -1,5 +1,5 @@
 import time
-
+import csv
 
 class Action:
     """Action"""
@@ -52,7 +52,7 @@ def afficherPanier(actions):
     page = "Liste des actions à acquérir :\n"
     for i in range(0, len(actions)):
         if actions[i].panier != 0:
-            page += f"- {actions[i].panier}x {actions[i].nom}\n"
+            page += f"- {actions[i].panier}x {actions[i].nom} {actions[i].cout}\n"
     return page
 
 
@@ -65,6 +65,7 @@ def afficherResultat(actions, meilleurPanier, meilleurRendement):
 
 
 def construirePanier(actions, noeud):
+    """Fonction récursive de parcours d'un arbre binaire"""
     global meilleurRendement
     global meilleurPanier
     global iteration
@@ -82,28 +83,24 @@ def construirePanier(actions, noeud):
     return
 
 
-actions = []
-actions.append(Action("Action-1", 20, 0.05))
-actions.append(Action("Action-2", 30, 0.1))
-actions.append(Action("Action-3", 50, 0.15))
-actions.append(Action("Action-4", 70, 0.20))
-actions.append(Action("Action-5", 60, 0.17))
-actions.append(Action("Action-6", 80, 0.25))
-actions.append(Action("Action-7", 22, 0.07))
-actions.append(Action("Action-8", 26, 0.11))
-actions.append(Action("Action-9", 48, 0.13))
-actions.append(Action("Action-10", 34, 0.27))
-actions.append(Action("Action-11", 42, 0.17))
-actions.append(Action("Action-12", 110, 0.09))
-actions.append(Action("Action-13", 38, 0.23))
-actions.append(Action("Action-14", 14, 0.01))
-actions.append(Action("Action-15", 18, 0.03))
-actions.append(Action("Action-16", 8, 0.08))
-actions.append(Action("Action-17", 4, 0.12))
-actions.append(Action("Action-18", 10, 0.14))
-actions.append(Action("Action-19", 24, 0.21))
-actions.append(Action("Action-20", 114, 0.18))
+def verifDataset(row):
+    return True
 
+
+def lireDataset(nomFichier):
+    """Création de la liste d'objet Action à partir du Dataset"""
+    actions = []
+    with open(nomFichier, 'r', newline='') as f:
+        lecteur = csv.reader(f, delimiter=',')
+        entete = True
+        for row in lecteur:
+            if not entete and verifDataset(row):
+                actions.append(Action(row[0], float(row[1]), float(row[2]) / 100))
+            entete = False
+    return actions
+
+
+actions = lireDataset('Data/Exercice.csv')
 
 print("\nFORME ITERATIVE\n")
 print(time.ctime())
@@ -120,9 +117,10 @@ for i in range(1, 2**len(actions)):
         meilleurPanier = binary
 
 print(time.ctime())
+print(i, "Itérations")
 afficherResultat(actions, meilleurPanier, meilleurRendement)
 
-for i in range(20): actions[i].panier = 0
+for i in range(len(actions)): actions[i].panier = 0
 
 print("\nFORME RECURSIVE\n")
 print(time.ctime())
@@ -134,5 +132,5 @@ iteration = 0
 construirePanier(actions, 0)
 
 print(time.ctime())
+print(iteration, "Itérations")
 afficherResultat(actions, meilleurPanier, meilleurRendement)
-print(iteration)
