@@ -1,5 +1,5 @@
 import time
-import csv
+import pandas as pd
 from operator import attrgetter
 
 
@@ -78,34 +78,28 @@ def construirePanier(actions, noeud, invest, coutNoeud):
     return
 
 
-def verifDataset(row):
-    if float(row[1]) <= 0:
-        return False
-    else:
-        return True
-
-
-def lireDataset(nomFichier):
-    """Création de la liste d'objet Action à partir du Dataset"""
+def pandasExtraction(nomFichier):
+    """Lecture fichier CSV + rapport d'extraction + optimisation contextuelle"""
+    print('\nINPUT DATASET -', nomFichier)
+    actionsDF = pd.read_csv(nomFichier)
+    print(actionsDF.info(), "\n", actionsDF.describe())
+    print('\nOPTIMIZED DATASET')
+    actionsOpt = actionsDF[(actionsDF['price'] > 0) & (actionsDF['profit'] > 0)]
+    print(actionsOpt.info(), "\n", actionsOpt.describe())
     actions = []
-    with open(nomFichier, 'r', newline='') as f:
-        lecteur = csv.reader(f, delimiter=',')
-        entete = True
-        for row in lecteur:
-            if not entete and verifDataset(row):
-                actions.append(Action(row[0], float(row[1]), float(row[2]) / 100))
-            entete = False
+    for label, row in actionsOpt.iterrows():
+        actions.append(Action(row['name'], float(row['price']), float(row['profit']) / 100))
     return actions
 
 
-def methodeGloutonne(dataset):
-    actions = lireDataset(dataset)
-    print(f"\nMETHODE GLOUTONNE {dataset}\n")
+def methodeGloutonne(actions, label):
+    print(f"\nMETHODE GLOUTONNE - {label}\n")
 
     print(time.ctime())
     cout = 0
     actions.sort(key=attrgetter('benefice', 'cout'), reverse=True)
     for i in range(len(actions)):
+        actions[i].panier = 0
         invest = cout + actions[i].cout
         if invest <= 500:
             cout = invest
@@ -118,10 +112,9 @@ def methodeGloutonne(dataset):
     print(afficherPanier(actions))
     return
 
-methodeGloutonne('Data\Exercice.csv')
 
-actions = lireDataset('Data\Exercice.csv')
-print("\nPROCEDURE DE SEPARATION ET D'EVALUATION (basique) Data\Exercice.csv\n")
+actions = pandasExtraction('Data\Exercice.csv')
+print("\nPROCEDURE DE SEPARATION ET D'EVALUATION (basique) - EXERCICE\n")
 
 print(time.ctime())
 meilleurRendement = 0
@@ -140,4 +133,11 @@ print("Investissement de " + "{:.2f}".format(sommeCout(actions)) + " € pour un
       "{:.2f}".format(meilleurRendement) + " € sur deux ans")
 print(afficherPanier(actions))
 
-methodeGloutonne('Data\dataset1_Python+P7.csv')
+methodeGloutonne(actions, 'EXERCICE')
+
+actions = pandasExtraction('Data\dataset1_Python+P7.csv')
+methodeGloutonne(actions, 'DATASET1')
+
+actions = pandasExtraction('Data\dataset2_Python+P7.csv')
+methodeGloutonne(actions, 'DATASET2')
+

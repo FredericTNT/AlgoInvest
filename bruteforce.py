@@ -134,3 +134,43 @@ construirePanier(actions, 0)
 print(time.ctime())
 print(iteration, "Itérations")
 afficherResultat(actions, meilleurPanier, meilleurRendement)
+
+print("\nPROGRAMMATION DYNAMIQUE\n")
+print(time.ctime())
+
+iteration = 0
+tableau = []
+tabRow = []
+for i in range(501):
+    tabRow.append(0)
+tableau.append(tabRow)
+
+for action in range(len(actions)):
+    tabRow = []
+    for invest in range(501):
+        if invest >= int(actions[action].cout):
+            tabRow.append(max(tableau[action][invest],
+                              tableau[action][invest - int(actions[action].cout)] + actions[action].rendement))
+        else:
+            tabRow.append(tableau[action][invest])
+        iteration += 1
+    tableau.append(tabRow)
+
+action = len(actions)
+for i in range(action): actions[i].panier = 0
+invest = 500
+rendement = tableau[action][invest]
+
+while action > 0 and invest > 0:
+    action -= 1
+    while rendement == tableau[action][invest] and rendement > 0:
+        action -= 1
+    if rendement > 0:
+        actions[action].panier = 1
+        invest -= int(actions[action].cout)
+        rendement = tableau[action][invest]
+
+print(time.ctime())
+print(iteration, "Itérations")
+meilleurPanier = extrairePanier(actions)
+afficherResultat(actions, meilleurPanier, sommeRendement(actions))
