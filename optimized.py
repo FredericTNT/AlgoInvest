@@ -82,13 +82,14 @@ def pandasExtraction(nomFichier):
     """Lecture fichier CSV + rapport d'extraction + optimisation contextuelle"""
     print('\nINPUT DATASET -', nomFichier)
     actionsDF = pd.read_csv(nomFichier)
-    print(actionsDF.info(), "\n", actionsDF.describe())
+    print(actionsDF.info(), "\n", actionsDF.describe(percentiles=[0.10, 0.25, 0.50]))
     print('\nOPTIMIZED DATASET')
-    actionsOpt = actionsDF[(actionsDF['price'] > 0) & (actionsDF['profit'] > 0)]
-    print(actionsOpt.info(), "\n", actionsOpt.describe())
+    actionsOpt = actionsDF[(actionsDF['price'] > 0) & (actionsDF['profit'] > 0) &
+                           (actionsDF['price'] * actionsDF['profit'] >= 1)]
+    print(actionsOpt.info(), "\n", actionsOpt.describe(percentiles=[0.10, 0.25, 0.50]))
     actions = []
     for label, row in actionsOpt.iterrows():
-        actions.append(Action(row['name'], float(row['price']), float(row['profit']) / 100))
+        actions.append(Action(row['name'], float(row['price']), float(row['profit'] / 100)))
     return actions
 
 
@@ -107,6 +108,58 @@ def methodeGloutonne(actions, label):
     print(time.ctime())
 
     print(i + 1, "Itérations")
+    print("Investissement de " + "{:.2f}".format(sommeCout(actions)) + " € pour un rendement de " +
+          "{:.2f}".format(sommeRendement(actions)) + " € sur deux ans")
+    print(afficherPanier(actions))
+    return
+
+
+def progDynamiqueCentieme(actions, label):
+    print(f"\nPROGRAMMATION DYNAMIQUE - {label}\n")
+    print(time.ctime())
+
+    iteration = 0
+    tableau = []
+    tabRow = []
+
+    for i in range(len(actions)):
+        actions[i].cout = round(actions[i].cout * 100)
+        actions[i].panier = 0
+
+    for i in range(50001):
+        tabRow.append(0)
+    tableau.append(tabRow)
+
+    for action in range(len(actions)):
+        tabRow = []
+        for invest in range(50001):
+            if invest >= int(actions[action].cout):
+                tabRow.append(max(tableau[action][invest],
+                                  tableau[action][invest - int(actions[action].cout)] + actions[action].rendement))
+            else:
+                tabRow.append(tableau[action][invest])
+            iteration += 1
+        tableau.append(tabRow)
+
+    action = len(actions)
+    for i in range(action): actions[i].panier = 0
+    invest = 50000
+    rendement = tableau[action][invest]
+
+    while action > 0 and invest > 0:
+        action -= 1
+        while rendement == tableau[action][invest] and rendement > 0:
+            action -= 1
+        if rendement > 0:
+            actions[action].panier = 1
+            invest -= int(actions[action].cout)
+            rendement = tableau[action][invest]
+
+    for i in range(len(actions)):
+        actions[i].cout = actions[i].cout / 100
+
+    print(time.ctime())
+    print(iteration, "Itérations")
     print("Investissement de " + "{:.2f}".format(sommeCout(actions)) + " € pour un rendement de " +
           "{:.2f}".format(sommeRendement(actions)) + " € sur deux ans")
     print(afficherPanier(actions))
@@ -137,7 +190,10 @@ methodeGloutonne(actions, 'EXERCICE')
 
 actions = pandasExtraction('Data\dataset1_Python+P7.csv')
 methodeGloutonne(actions, 'DATASET1')
+progDynamiqueCentieme(actions, 'DATASET1')
 
 actions = pandasExtraction('Data\dataset2_Python+P7.csv')
 methodeGloutonne(actions, 'DATASET2')
+progDynamiqueCentieme(actions, 'DATASET2')
+
 
