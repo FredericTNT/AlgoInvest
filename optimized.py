@@ -65,7 +65,7 @@ def construirePanier(actions, noeud, invest, coutNoeud):
     global iteration
     global coutTotal
     iteration += 1
-    if noeud < len(actions) and invest < 500 and (invest + coutTotal - coutNoeud) > 498:
+    if noeud < len(actions) and invest < 500 and (invest + coutTotal - coutNoeud) > 495:
         actions[noeud].panier = 1
         construirePanier(actions, noeud + 1, invest + actions[noeud].cout, coutNoeud + actions[noeud].cout)
         actions[noeud].panier = 0
@@ -84,8 +84,7 @@ def pandasExtraction(nomFichier):
     actionsDF = pd.read_csv(nomFichier)
     print(actionsDF.info(), "\n", actionsDF.describe(percentiles=[0.10, 0.25, 0.50]))
     print('\nOPTIMIZED DATASET')
-    actionsOpt = actionsDF[(actionsDF['price'] > 0) & (actionsDF['profit'] > 0) &
-                           (actionsDF['price'] * actionsDF['profit'] >= 1)]
+    actionsOpt = actionsDF[(actionsDF['price'] > 0) & (actionsDF['profit'] > 0)].drop_duplicates(subset='name')
     print(actionsOpt.info(), "\n", actionsOpt.describe(percentiles=[0.10, 0.25, 0.50]))
     actions = []
     for label, row in actionsOpt.iterrows():
@@ -93,7 +92,7 @@ def pandasExtraction(nomFichier):
     return actions
 
 
-def methodeGloutonne(actions, label):
+def methodeGloutonne(actions, label, investMax):
     print(f"\nMETHODE GLOUTONNE - {label}\n")
 
     print(time.ctime())
@@ -102,7 +101,7 @@ def methodeGloutonne(actions, label):
     for i in range(len(actions)):
         actions[i].panier = 0
         invest = cout + actions[i].cout
-        if invest <= 500:
+        if invest <= investMax:
             cout = invest
             actions[i].panier = 1
     print(time.ctime())
@@ -114,25 +113,28 @@ def methodeGloutonne(actions, label):
     return
 
 
-def progDynamiqueCentieme(actions, label):
+def progDynamique(actions, label, investMax, centieme):
     print(f"\nPROGRAMMATION DYNAMIQUE - {label}\n")
     print(time.ctime())
 
     iteration = 0
     tableau = []
     tabRow = []
+    nbRow = investMax + 1
 
-    for i in range(len(actions)):
-        actions[i].cout = round(actions[i].cout * 100)
-        actions[i].panier = 0
+    if centieme:
+        for i in range(len(actions)):
+            actions[i].cout = round(actions[i].cout * 100)
+            actions[i].panier = 0
+        nbRow = investMax * 100 + 1
 
-    for i in range(50001):
+    for i in range(nbRow):
         tabRow.append(0)
     tableau.append(tabRow)
 
     for action in range(len(actions)):
         tabRow = []
-        for invest in range(50001):
+        for invest in range(nbRow):
             if invest >= int(actions[action].cout):
                 tabRow.append(max(tableau[action][invest],
                                   tableau[action][invest - int(actions[action].cout)] + actions[action].rendement))
@@ -143,7 +145,8 @@ def progDynamiqueCentieme(actions, label):
 
     action = len(actions)
     for i in range(action): actions[i].panier = 0
-    invest = 50000
+    invest = investMax
+    if centieme: invest *= 100
     rendement = tableau[action][invest]
 
     while action > 0 and invest > 0:
@@ -155,8 +158,9 @@ def progDynamiqueCentieme(actions, label):
             invest -= int(actions[action].cout)
             rendement = tableau[action][invest]
 
-    for i in range(len(actions)):
-        actions[i].cout = actions[i].cout / 100
+    if centieme:
+        for i in range(len(actions)):
+            actions[i].cout = actions[i].cout / 100
 
     print(time.ctime())
     print(iteration, "Itérations")
@@ -186,14 +190,16 @@ print("Investissement de " + "{:.2f}".format(sommeCout(actions)) + " € pour un
       "{:.2f}".format(meilleurRendement) + " € sur deux ans")
 print(afficherPanier(actions))
 
-methodeGloutonne(actions, 'EXERCICE')
+methodeGloutonne(actions, 'EXERCICE', 500)
+progDynamique(actions, 'EXERCICE', 500, False)
 
 actions = pandasExtraction('Data\dataset1_Python+P7.csv')
-methodeGloutonne(actions, 'DATASET1')
-progDynamiqueCentieme(actions, 'DATASET1')
+methodeGloutonne(actions, 'DATASET1', 500)
+progDynamique(actions, 'DATASET1', 500, True)
 
 actions = pandasExtraction('Data\dataset2_Python+P7.csv')
-methodeGloutonne(actions, 'DATASET2')
-progDynamiqueCentieme(actions, 'DATASET2')
+methodeGloutonne(actions, 'DATASET2', 500)
+progDynamique(actions, 'DATASET2', 500, True)
+
 
 
