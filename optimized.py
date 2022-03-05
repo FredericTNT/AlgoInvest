@@ -125,7 +125,6 @@ def progDynamique(actions, label, investMax, centieme):
     if centieme:
         for i in range(len(actions)):
             actions[i].cout = round(actions[i].cout * 100)
-            actions[i].panier = 0
         nbRow = investMax * 100 + 1
 
     for i in range(nbRow):
@@ -134,7 +133,8 @@ def progDynamique(actions, label, investMax, centieme):
 
     for action in range(len(actions)):
         tabRow = []
-        for invest in range(nbRow):
+        tabRow.append(0)
+        for invest in range(1, nbRow):
             if invest >= int(actions[action].cout):
                 tabRow.append(max(tableau[action][invest],
                                   tableau[action][invest - int(actions[action].cout)] + actions[action].rendement))
@@ -170,7 +170,7 @@ def progDynamique(actions, label, investMax, centieme):
     return
 
 
-actions = pandasExtraction('Data\Exercice.csv')
+actions = pandasExtraction('Data/Exercice.csv')
 print("\nPROCEDURE DE SEPARATION ET D'EVALUATION (basique) - EXERCICE\n")
 
 print(time.ctime())
@@ -193,13 +193,10 @@ print(afficherPanier(actions))
 methodeGloutonne(actions, 'EXERCICE', 500)
 progDynamique(actions, 'EXERCICE', 500, False)
 
-actions = pandasExtraction('Data\dataset1_Python+P7.csv')
+actions = pandasExtraction('Data/dataset1_Python+P7.csv')
 methodeGloutonne(actions, 'DATASET1', 500)
 progDynamique(actions, 'DATASET1', 500, True)
 
-actions = pandasExtraction('Data\dataset2_Python+P7.csv')
+actions = pandasExtraction('Data/dataset2_Python+P7.csv')
 methodeGloutonne(actions, 'DATASET2', 500)
 progDynamique(actions, 'DATASET2', 500, True)
-
-
-
