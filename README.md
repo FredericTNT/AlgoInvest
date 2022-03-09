@@ -31,7 +31,7 @@ Le clonage (git clone) se fait dans un répertoire AlgoInvest et son sous-réper
 (nomFichier.csv)
 ```
 $ git clone https://github.com/FredericTNT/AlgoInvest
-$ cd Chess
+$ cd AlgoInvest
 $ python -m venv <nom environnement>
 $ <nom environnement>/scripts/activate
 $ pip install -r requirements.txt
@@ -46,7 +46,7 @@ $ python optimized.py
 $ python report.py
 ```
 
-Les rapports d'exploration des données sont générés dans le répertoire AlgoInvest/Data (nomFichier.html)
+Les rapports d'exploration des données sont générés dans le répertoire AlgoInvest/Data/nomFichier.html
 <!---
 ## FAQs
 -->
