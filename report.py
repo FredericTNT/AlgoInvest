@@ -2,14 +2,14 @@ import pandas as pd
 from pandas_profiling import ProfileReport
 
 
-def pandasProfiling(nomFichier):
+def pandas_report(nom_fichier):
     """Lecture fichier CSV + rapport d'extraction détaillé"""
-    actionsDF = pd.read_csv(nomFichier)
-    prof = ProfileReport(actionsDF)
-    prof.to_file(output_file=nomFichier.split('.')[0]+'.html')
+    actions_df = pd.read_csv(nom_fichier)
+    prof = ProfileReport(actions_df)
+    prof.to_file(output_file=nom_fichier.split('.')[0]+'.html')
     return
 
 
-pandasProfiling('Data/Exercice.csv')
-pandasProfiling('Data/dataset1_Python+P7.csv')
-pandasProfiling('Data/dataset2_Python+P7.csv')
+pandas_report('Data/Exercice.csv')
+pandas_report('Data/dataset1_Python+P7.csv')
+pandas_report('Data/dataset2_Python+P7.csv')
